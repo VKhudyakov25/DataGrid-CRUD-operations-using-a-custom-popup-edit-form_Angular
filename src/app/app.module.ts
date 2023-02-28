@@ -6,13 +6,21 @@ import { AppService } from './app.service';
 
 import {
   DxButtonModule,
+  DxDataGridModule,
+  DxPopupModule,
   DxTextBoxModule,
-  DxSelectBoxModule,
 } from 'devextreme-angular';
+import { PopupContentComponent } from './popup-content/popup-content.component';
 
 @NgModule({
-  declarations: [AppComponent],
-  imports: [BrowserModule, DxButtonModule, DxTextBoxModule, DxSelectBoxModule],
+  declarations: [AppComponent, PopupContentComponent],
+  imports: [
+    BrowserModule,
+    DxDataGridModule,
+    DxPopupModule,
+    DxButtonModule,
+    DxTextBoxModule,
+  ],
   providers: [AppService],
   bootstrap: [AppComponent],
 })

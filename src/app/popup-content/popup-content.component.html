@@ -1,0 +1,18 @@
+<div class="textboxes">
+  <div *ngFor="let textbox of content | keyvalue">
+    <dx-text-box
+      id="{{ textbox.key }}"
+      name="{{ textbox.key }}"
+      *ngIf="textbox.key !== 'ID'"
+      label="{{ textbox.key }}"
+      labelMode="floating"
+      value="{{ textbox.value }}"
+      [showClearButton]="true"
+      >{{ textbox }}</dx-text-box
+    >
+  </div>
+</div>
+<div class="buttons">
+  <dx-button text="Save" (onClick)="saveEvent($event)"></dx-button>
+  <dx-button text="Cancel" (onClick)="cancelEvent($event)"></dx-button>
+</div>

@@ -1,8 +1,15 @@
-import { Component } from '@angular/core';
+import {
+  Component,
+  QueryList,
+  ViewChild,
+  ViewChildren,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
-import { Product, AppService } from './app.service';
+import { Employee, AppService } from './app.service';
 import DataSource from 'devextreme/data/data_source';
-import CustomStore from 'devextreme/data/custom_store';
+import ArrayStore from 'devextreme/data/array_store';
+import { DxPopupComponent, DxTextBoxComponent } from 'devextreme-angular';
 
 @Component({
   selector: 'app-root',
@@ -11,52 +18,67 @@ import CustomStore from 'devextreme/data/custom_store';
   providers: [AppService],
 })
 export class AppComponent {
-  products: Product[];
-  productsDataSource: DataSource;
-  myStore: CustomStore;
-  searchModeOption = 'contains';
-  searchExprOption: any = 'Name';
-  searchTimeoutOption = 200;
-  minSearchLengthOption = 0;
-  showDataBeforeSearchOption = false;
+  @ViewChild(DxPopupComponent) popup: DxPopupComponent;
+  @ViewChildren(DxTextBoxComponent)
+  textboxElements!: QueryList<DxTextBoxComponent>;
+  store: ArrayStore;
+  dataSource: DataSource;
+  event: any;
+  content: any;
 
   constructor(service: AppService) {
-    this.products = service.getProducts();
-    this.myStore = new CustomStore({
-      key: 'id',
-      loadMode: 'raw',
-      load: () => {
-        return service.getProducts();
-      },
-      insert: (val) => {
-        return service.insertProduct(val);
-      },
+    this.editEvent = this.editEvent.bind(this);
+    this.deleteEvent = this.deleteEvent.bind(this);
+    this.store = new ArrayStore({
+      key: 'ID',
+      data: service.getEmployees(),
     });
-    this.productsDataSource = new DataSource({
-      store: this.myStore,
+    this.dataSource = new DataSource({
+      store: this.store,
     });
   }
 
-  addCustomItem = (data: any) => {
-    if (!data.text) {
-      data.customItem = null;
-      return;
-    }
-    let productIds: any;
-    this.myStore.load().then((e: any) => {
-      productIds = e.map((item: Product) => item.id);
+  editEvent(e: any) {
+    this.event = e;
+    this.content = e.row.data;
+    this.popup.instance.show();
+  }
+
+  deleteEvent(e: any) {
+    this.store.remove(e.row.key);
+    this.dataSource.reload();
+  }
+
+  addEvent(e: any) {
+    this.event = e;
+    this.content = new Employee();
+    this.popup.instance.show();
+  }
+
+  saveEvent(e: any) {
+    let nextId;
+    !!this.dataSource.items().length
+      ? (nextId =
+          Math.max.apply(
+            Math,
+            this.dataSource.items().map(function (c) {
+              return c.ID;
+            }) || 1
+          ) + 1)
+      : (nextId = 1);
+    let diffs: any = {};
+    this.textboxElements.map((item) => {
+      diffs[item.name] = item.value;
+      item.value = '';
     });
-    let incrementedId = Math.max.apply(null, productIds) + 1;
-    let newItem = {
-      Name: data.text,
-      id: incrementedId,
-    };
-    this.myStore
-      .insert(newItem)
-      .then(() => this.productsDataSource.load())
-      .then(() => newItem)
-      .catch((error) => {
-        throw error;
-      });
-  };
+    this.event.row
+      ? this.store.update(this.event.row.key, diffs)
+      : this.store.insert({ ID: nextId, ...diffs });
+    this.dataSource.reload();
+    this.popup.instance.hide();
+  }
+
+  cancelEvent(e: any) {
+    this.popup.instance.hide();
+  }
 }
